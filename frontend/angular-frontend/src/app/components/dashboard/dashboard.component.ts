@@ -447,46 +447,32 @@ export class DashboardComponent implements OnInit {
     this.scrollToBottom();
     this.isBotTyping = true;
     
-    let finalReply = '';
+    try {
+      const authHeader = this.authService.getAuthHeader();
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (authHeader) headers['Authorization'] = authHeader;
 
-    if (this.geminiApiKey) {
-      try {
-        const validHistoryMsgs = this.chatMsgs.filter(m => m.text && m.text !== (this.currentLang() === 'hi' ? 'नमस्कार! मैं संविधान मित्र हूँ — आपका संवैधानिक मार्गदर्शक।' : 'Namaskar! I am the Samvidhan Mitra — your constitutional guide.'));
-        
-        const history = validHistoryMsgs.map(m => ({
-          role: m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }]
-        }));
-        
-        const payload = {
-          contents: history
-        };
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          history: this.chatMsgs.map(m => ({ role: m.role, text: m.text })),
+          apiKey: this.geminiApiKey
+        })
+      });
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiApiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error('API Error');
-        const data = await res.json();
-        finalReply = data.candidates[0].content.parts[0].text;
-      } catch (err) {
-        console.error(err);
-        finalReply = 'Sorry, there was an error connecting to the AI model.';
-      }
-    } else {
-      const replyEn = this.getBotReplyEn(q);
-      finalReply = replyEn;
-      if (this.currentLang() === 'hi') {
-        finalReply = await this.translateText(replyEn, 'hi');
-      }
-      finalReply = "⚠️ [AI Key Missing - Using Basic Rules]\n" + finalReply;
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      
+      this.isBotTyping = false;
+      this.chatMsgs.push({role:'bot', text:data.reply, time:new Date()});
+      this.scrollToBottom();
+    } catch (err) {
+      console.error(err);
+      this.isBotTyping = false;
+      this.chatMsgs.push({role:'bot', text: 'Sorry, I am unable to connect to the server.', time:new Date()});
+      this.scrollToBottom();
     }
-
-    this.isBotTyping = false;
-    this.chatMsgs.push({role:'bot', text:finalReply, time:new Date()});
-    this.scrollToBottom();
   }
   sendQuickChat(q: string) {
     this.chatInputStore = q;

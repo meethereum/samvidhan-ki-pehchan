@@ -4,6 +4,7 @@ import pg from 'pg';
 const { Pool } = pg;
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import { AIService } from './ai-service.js';
 
 dotenv.config();
 
@@ -61,6 +62,21 @@ app.get('/api/health', (req, res) => {
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   const user = (req as any).user;
   res.json({ username: user.username });
+});
+
+app.post('/api/chat', authMiddleware, async (req, res) => {
+  const { history, apiKey } = req.body;
+  
+  if (!history || !Array.isArray(history)) {
+    return res.status(400).json({ message: 'Chat history is required' });
+  }
+
+  try {
+    const reply = await AIService.getChatResponse(history, apiKey);
+    res.json({ reply });
+  } catch (error) {
+    res.status(500).json({ message: 'Error processing chat' });
+  }
 });
 
 app.listen(port, () => {
