@@ -715,67 +715,74 @@
     }
 
     @case ('chatbot') {
-    <div class="section-header">
-      <h2>AI Samvidhan Mitra</h2>
-      <p>Ask anything about the Indian Constitution</p>
-    </div>
-    <div class="chat-wrap">
-      <div class="chat-header">
-        <div class="chat-status-dot"></div>
-        <div>
-          <div class="chat-name">Samvidhan Mitra</div>
-          <div class="chat-sub">Constitutional AI · Active</div>
-        </div>
-      </div>
-      <div class="chat-msgs" id="chat-msgs-container">
-        @for (m of chatMsgs; track m.time) {
-        <div class="msg" [ngClass]="m.role" [style.flex-direction]="m.role === 'user' ? 'row-reverse' : 'row'"
-          [style.align-self]="m.role === 'user' ? 'flex-end' : 'flex-start'">
-          <div class="msg-bubble">{{ m.text }}</div>
-        </div>
-        }
-        @if (isBotTyping) {
-        <div class="msg bot" style="align-self:flex-start;">
-          <div class="typing"><span></span><span></span><span></span></div>
-        </div>
-        }
-      </div>
-      <div class="quick-questions">
-        <button class="quick-q" (click)="sendQuickChat('What is the Preamble?')"><span class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">history_edu</span>
-          Preamble</button>
-        <button class="quick-q" (click)="sendQuickChat('Explain fundamental rights')"><span
-            class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">balance</span> Rights</button>
-        <button class="quick-q" (click)="sendQuickChat('Who was Dr. Ambedkar?')"><span class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">account_balance</span>
-          Ambedkar</button>
-        <button class="quick-q" (click)="sendQuickChat('What are fundamental duties?')"><span
-            class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">assignment</span> Duties</button>
-        <button class="quick-q" (click)="sendQuickChat('Explain the emergency provisions')"><span
-            class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">emergency</span> Emergency</button>
-        <button class="quick-q" (click)="sendQuickChat('Right to privacy judgment')"><span
-            class="material-symbols-outlined"
-            style="vertical-align: text-bottom; font-size: 14px; margin-right: 4px;">lock</span> Privacy</button>
-      </div>
-      <div class="chat-input-area" style="flex-direction: column; align-items: stretch;">
-        <div style="background: #fff3e0; padding: 10px; border-radius: 12px; margin-bottom: 12px; font-size: 12px; color: #e65100; border: 1px dashed #ffb74d;">
-          @if (!geminiApiKey) {
-            <strong>Want true AI?</strong> Enter a free Gemini API Key to train Samvidhan Mitra on the official Constitution of India documents.
-          } @else {
-            <strong style="color: #2e7d32;"><span class="material-symbols-outlined" style="vertical-align: middle; font-size: 14px;">check_circle</span> API Key Connected!</strong> You can now chat with the AI Legal Assistant.
-          }
-          <div style="display: flex; gap: 8px; margin-top: 8px;">
-            <input type="password" [(ngModel)]="geminiApiKey" placeholder="Paste your Gemini API Key here..." style="flex: 1; padding: 6px 10px; border: 1px solid #ffb74d; border-radius: 6px; font-size: 12px; outline: none;">
+    <div class="chatbot-container fade-in">
+      <div class="chatbot-layout">
+        <!-- Sidebar Disclaimer -->
+        <div class="chat-sidebar">
+          <div class="disclaimer-card">
+            <span class="material-symbols-outlined disclaimer-icon">gavel</span>
+            <h3>Constitutional Guide</h3>
+            <p>I am designed to help you explore and understand the <strong>Constitution of India</strong>.</p>
+            <div class="disclaimer-note">
+              <span class="material-symbols-outlined">info</span>
+              <span>This agent provides educational guidance only. It is <strong>not</strong> a substitute for professional legal advice.</span>
+            </div>
+            <ul class="chat-capabilities">
+              <li><span class="material-symbols-outlined">check_circle</span> Fundamental Rights</li>
+              <li><span class="material-symbols-outlined">check_circle</span> Judicial Landmark Cases</li>
+              <li><span class="material-symbols-outlined">check_circle</span> Historical Context</li>
+            </ul>
           </div>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <input class="chat-input" [(ngModel)]="chatInputStore" placeholder="Ask about the Constitution..."
-            (keydown.enter)="sendChat()">
-          <button class="chat-send" (click)="sendChat()"><span class="material-symbols-outlined"
-              style="font-size: 20px;">send</span></button>
+
+        <!-- Main Chat Window -->
+        <div class="chat-main">
+          <div class="chat-window">
+            <div class="chat-header-v2">
+              <div class="bot-info">
+                <div class="bot-avatar">
+                  <span class="material-symbols-outlined">smart_toy</span>
+                </div>
+                <div>
+                  <div class="chat-name">Samvidhan Mitra</div>
+                  <div class="chat-status">Powered by Constitutional Knowledge Base</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-messages-v2" id="chat-msgs-container">
+              @for (m of chatMsgs; track m.time) {
+                <div class="msg-v2" [ngClass]="m.role">
+                  <div class="msg-bubble-v2">
+                    <div class="msg-text">{{ m.text }}</div>
+                    <div class="msg-time">{{ m.time | date:'shortTime' }}</div>
+                  </div>
+                </div>
+              }
+              @if (isBotTyping) {
+                <div class="msg-v2 bot">
+                  <div class="msg-bubble-v2 typing-bubble">
+                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="chat-input-v2">
+              <div class="input-container-v2">
+                <input 
+                  type="text" 
+                  [(ngModel)]="chatInputStore" 
+                  placeholder="Ask a question about the Constitution..."
+                  (keydown.enter)="sendChat()"
+                  [disabled]="isBotTyping"
+                >
+                <button class="send-btn-v2" (click)="sendChat()" [disabled]="!chatInputStore.trim() || isBotTyping">
+                  <span class="material-symbols-outlined">send</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

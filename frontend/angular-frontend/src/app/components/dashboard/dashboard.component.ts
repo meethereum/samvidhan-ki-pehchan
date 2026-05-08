@@ -45,7 +45,6 @@ export class DashboardComponent implements OnInit {
   async toggleLang() {
     const newLang = this.currentLang() === 'en' ? 'hi' : 'en';
     this.currentLang.set(newLang);
-    // Optional: dynamically translate dynamic data if needed, though most is pre-translated
   }
 
   // Daily Fact State
@@ -97,7 +96,7 @@ export class DashboardComponent implements OnInit {
   // Progress Tracking
   getProgress(): number {
     let completed = 0;
-    const totalTasks = 4; // Quiz, Wordsearch, Articles opened, Chatbot used
+    const totalTasks = 4;
     if (this.qState.submitted) completed++;
     if (this.wsFoundWords.length > 0) completed++;
     if (this.openArticles.size > 0) completed++;
@@ -236,7 +235,6 @@ export class DashboardComponent implements OnInit {
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       this.searchQuery.set(transcript);
-      // Manually trigger the filter using the transcribed text
       this.onSearch({ target: { value: transcript } });
     };
     
@@ -255,10 +253,10 @@ export class DashboardComponent implements OnInit {
   // --- TEXT TO SPEECH ---
   speak(text: string) {
     if (!text) return;
-    window.speechSynthesis.cancel(); // Stop any currently playing audio
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = this.currentLang() === 'hi' ? 'hi-IN' : 'en-IN';
-    utterance.rate = 0.9; // Slightly slower for better comprehension
+    utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   }
 
@@ -428,16 +426,10 @@ export class DashboardComponent implements OnInit {
   chatInputStore = '';
   chatMsgs: any[] = [];
   isBotTyping = false;
-  chatResponses: any = {
-    preamble: {en:'The Preamble embodies the ideals of Justice, Liberty, Equality, and Fraternity.',hi:'प्रस्तावना न्याय, स्वतंत्रता, समानता और बंधुत्व के आदर्शों को समाहित करती है।'},
-    rights: {en:'There are 6 Fundamental Rights under Part III.',hi:'भाग III के तहत 6 मौलिक अधिकार हैं।'},
-    default: {en:'That\'s a great constitutional question! How else can I help?',hi:'यह एक महत्वपूर्ण संवैधानिक प्रश्न है! मैं आपकी और कैसे मदद कर सकता हूँ?'}
-  };
 
   initChat() {
-    this.chatMsgs = [{role:'bot',text:this.currentLang() === 'hi' ? 'नमस्कार! मैं संविधान मित्र हूँ — आपका संवैधानिक मार्गदर्शक।' : 'Namaskar! I am the Samvidhan Mitra — your constitutional guide.',time:new Date()}];
+    this.chatMsgs = [{role:'bot',text:this.currentLang() === 'hi' ? 'नमस्कार! मैं संविधान मित्र हूँ — आपका संवैधानिक मार्गदर्शक।' : 'Namaskar! I am the Samvidhan Mitra — your constitutional guide. How can I help you understand our Constitution today?',time:new Date()}];
   }
-  geminiApiKey = '';
 
   async sendChat() {
     const q = this.chatInputStore.trim();
@@ -456,8 +448,7 @@ export class DashboardComponent implements OnInit {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
-          history: this.chatMsgs.map(m => ({ role: m.role, text: m.text })),
-          apiKey: this.geminiApiKey
+          history: this.chatMsgs.map(m => ({ role: m.role, text: m.text }))
         })
       });
 
@@ -470,21 +461,11 @@ export class DashboardComponent implements OnInit {
     } catch (err) {
       console.error(err);
       this.isBotTyping = false;
-      this.chatMsgs.push({role:'bot', text: 'Sorry, I am unable to connect to the server.', time:new Date()});
+      this.chatMsgs.push({role:'bot', text: 'I apologize, but I am unable to connect to the constitutional knowledge base right now. Please try again in a moment.', time:new Date()});
       this.scrollToBottom();
     }
   }
-  sendQuickChat(q: string) {
-    this.chatInputStore = q;
-    this.sendChat();
-  }
-  getBotReplyEn(q: string) {
-    const l = q.toLowerCase();
-    if (l.includes('preamble')) return 'The Preamble embodies the ideals of Justice, Liberty, Equality, and Fraternity.';
-    if (l.includes('right')) return 'There are 6 Fundamental Rights under Part III of the Constitution.';
-    if (l.includes('duty') || l.includes('duties')) return 'There are 11 Fundamental Duties under Article 51A.';
-    return 'That is a great constitutional question! What else would you like to explore?';
-  }
+
   scrollToBottom() {
     setTimeout(() => {
       const c = document.getElementById('chat-msgs-container');
