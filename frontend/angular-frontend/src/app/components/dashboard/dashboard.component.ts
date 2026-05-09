@@ -427,18 +427,46 @@ export class DashboardComponent implements OnInit {
   chatMsgs: any[] = [];
   isBotTyping = false;
 
+  /** Convert the RAG markdown output to safe HTML for display */
+  renderMarkdown(text: string): string {
+    if (!text) return '';
+    let html = text
+      // Escape raw HTML to prevent XSS
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // **bold**
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // blockquote lines starting with &gt; (already escaped above)
+      .replace(/^&gt;\s?(.+)$/gm, '<blockquote>$1</blockquote>')
+      // horizontal rule ---
+      .replace(/^---+$/gm, '<hr>')
+      // blank lines → paragraph breaks
+      .replace(/\n{2,}/g, '</p><p>')
+      // single newlines → <br>
+      .replace(/\n/g, '<br>');
+    return `<p>${html}</p>`;
+  }
+
   initChat() {
-    this.chatMsgs = [{role:'bot',text:this.currentLang() === 'hi' ? 'नमस्कार! मैं संविधान मित्र हूँ — आपका संवैधानिक मार्गदर्शक।' : 'Namaskar! I am the Samvidhan Mitra — your constitutional guide. How can I help you understand our Constitution today?',time:new Date()}];
+    this.chatMsgs = [{
+      role: 'bot',
+      text: this.currentLang() === 'hi'
+        ? 'नमस्कार! मैं संविधान मित्र हूँ — आपका संवैधानिक मार्गदर्शक।'
+        : 'Namaskar! I am the Samvidhan Mitra — your constitutional guide. How can I help you understand our Constitution today?',
+      time: new Date()
+    }];
   }
 
   async sendChat() {
     const q = this.chatInputStore.trim();
-    if (!q) return;
+    if (!q || this.isBotTyping) return;
     this.chatInputStore = '';
-    this.chatMsgs.push({role:'user', text:q, time:new Date()});
+    this.chatMsgs.push({ role: 'user', text: q, time: new Date() });
     this.scrollToBottom();
     this.isBotTyping = true;
-    
+
+    // Hard client-side cutoff — browser aborts the fetch after 30s
+    const signal = AbortSignal.timeout(30_000);
+
     try {
       const authHeader = this.authService.getAuthHeader();
       const headers: any = { 'Content-Type': 'application/json' };
@@ -446,31 +474,42 @@ export class DashboardComponent implements OnInit {
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: headers,
+        headers,
         body: JSON.stringify({
           history: this.chatMsgs.map(m => ({ role: m.role, text: m.text }))
-        })
+        }),
+        signal,
       });
 
-      if (!res.ok) throw new Error('API Error');
-      const data = await res.json();
-      
+      if (res.status === 504) throw new Error('timeout');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as any;
+        throw new Error(body.message || 'API Error');
+      }
+
+      const data = await res.json() as { reply: string };
       this.isBotTyping = false;
-      this.chatMsgs.push({role:'bot', text:data.reply, time:new Date()});
+      this.chatMsgs.push({ role: 'bot', text: data.reply, time: new Date() });
       this.scrollToBottom();
-    } catch (err) {
-      console.error(err);
+
+    } catch (err: any) {
       this.isBotTyping = false;
-      this.chatMsgs.push({role:'bot', text: 'I apologize, but I am unable to connect to the constitutional knowledge base right now. Please try again in a moment.', time:new Date()});
+      const isTimeout = err?.name === 'TimeoutError' || err?.name === 'AbortError' || err?.message === 'timeout';
+      const reply = isTimeout
+        ? 'The request timed out. The AI service may be slow — please try again.'
+        : 'I am unable to connect to the constitutional knowledge base right now. Please try again in a moment.';
+      this.chatMsgs.push({ role: 'bot', text: reply, time: new Date() });
       this.scrollToBottom();
     }
   }
 
   scrollToBottom() {
+    // Use a small delay so Angular has rendered the new message first.
+    // querySelector works even when the panel is not currently visible.
     setTimeout(() => {
       const c = document.getElementById('chat-msgs-container');
       if (c) c.scrollTop = c.scrollHeight;
-    }, 100);
+    }, 80);
   }
 
   ngOnInit() {

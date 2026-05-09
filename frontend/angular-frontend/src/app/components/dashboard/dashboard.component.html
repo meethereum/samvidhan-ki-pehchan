@@ -84,7 +84,7 @@
     </div>
   </div>
 
-  <div class="content">
+  <div class="content" [class.page-chatbot]="currentPage() === 'chatbot'">
     @switch (currentPage()) {
     @case ('home') {
     <div class="hero fade-in">
@@ -754,7 +754,11 @@
               @for (m of chatMsgs; track m.time) {
                 <div class="msg-v2" [ngClass]="m.role">
                   <div class="msg-bubble-v2">
-                    <div class="msg-text">{{ m.text }}</div>
+                    @if (m.role === 'bot') {
+                      <div class="msg-text msg-markdown" [innerHTML]="renderMarkdown(m.text)"></div>
+                    } @else {
+                      <div class="msg-text">{{ m.text }}</div>
+                    }
                     <div class="msg-time">{{ m.time | date:'shortTime' }}</div>
                   </div>
                 </div>

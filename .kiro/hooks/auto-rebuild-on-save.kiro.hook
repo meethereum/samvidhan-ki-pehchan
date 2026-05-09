@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Auto Rebuild on Save",
+  "description": "Detects which Docker service a saved file belongs to and runs dev.sh to rebuild and restart only that service. Prevents stale containers from serving old code.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "frontend/angular-frontend/src/**/*.ts",
+      "frontend/angular-frontend/src/**/*.html",
+      "frontend/angular-frontend/src/**/*.css",
+      "backend/src/**/*.ts",
+      "rag/**/*.py"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "bash dev.sh auto",
+    "timeout": 300
+  }
+}

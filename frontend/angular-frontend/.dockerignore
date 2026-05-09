@@ -4,13 +4,4 @@ dist
 .vscode
 .git
 README.md
-*.js
-*.ts
-!src
-!public
-!package.json
-!package-lock.json
-!tsconfig.json
-!tsconfig.app.json
-!angular.json
-!nginx.conf
+*.log
