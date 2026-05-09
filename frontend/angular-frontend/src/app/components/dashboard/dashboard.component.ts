@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../data.service';
@@ -14,9 +14,10 @@ import { Router } from '@angular/router';
 })
 export class DashboardComponent implements OnInit {
   constructor(
-    public dataService: DataService, 
+    public dataService: DataService,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   logout() {
@@ -490,15 +491,17 @@ export class DashboardComponent implements OnInit {
       const data = await res.json() as { reply: string };
       this.isBotTyping = false;
       this.chatMsgs.push({ role: 'bot', text: data.reply, time: new Date() });
+      this.cdr.detectChanges();
       this.scrollToBottom();
 
     } catch (err: any) {
-      this.isBotTyping = false;
       const isTimeout = err?.name === 'TimeoutError' || err?.name === 'AbortError' || err?.message === 'timeout';
       const reply = isTimeout
         ? 'The request timed out. The AI service may be slow — please try again.'
         : 'I am unable to connect to the constitutional knowledge base right now. Please try again in a moment.';
+      this.isBotTyping = false;
       this.chatMsgs.push({ role: 'bot', text: reply, time: new Date() });
+      this.cdr.detectChanges();
       this.scrollToBottom();
     }
   }
